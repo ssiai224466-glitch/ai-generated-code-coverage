@@ -1,13 +1,28 @@
 import os
 
-services = ["service-a", "service-b"]
+# Add your services here
+services = [
+    "service-a",
+    "service-b"
+]
 
 results = []
 
+
+def progress_bar(percent):
+    """
+    Returns a 10-block progress bar.
+    Example:
+    75% -> ████████░░
+    """
+    filled = int(round(percent / 10))
+    return "█" * filled + "░" * (10 - filled)
+
+
 for service in services:
 
-    total = 0
-    ai = 0
+    total_lines = 0
+    ai_lines = 0
 
     for root, dirs, files in os.walk(service):
 
@@ -18,7 +33,9 @@ for service in services:
 
             inside_ai = False
 
-            with open(os.path.join(root, file), encoding="utf-8") as f:
+            path = os.path.join(root, file)
+
+            with open(path, encoding="utf-8") as f:
 
                 for line in f:
 
@@ -27,7 +44,7 @@ for service in services:
                     if not line:
                         continue
 
-                    total += 1
+                    total_lines += 1
 
                     if "AI START" in line:
                         inside_ai = True
@@ -38,31 +55,57 @@ for service in services:
                         continue
 
                     if inside_ai:
-                        ai += 1
+                        ai_lines += 1
 
-    coverage = round(ai * 100 / total, 2)
+    coverage = (
+        round(ai_lines * 100 / total_lines, 2)
+        if total_lines else 0
+    )
 
-    results.append((service, total, ai, coverage))
+    results.append(
+        (service, total_lines, ai_lines, coverage)
+    )
 
     print(f"{service} : {coverage}%")
 
 #
-# Write GitHub Summary
+# GitHub Workflow Summary
 #
 
 summary = os.getenv("GITHUB_STEP_SUMMARY")
 
 if summary:
 
-    with open(summary, "a") as f:
+    overall_ai = 0
+    overall_total = 0
 
-        f.write("# AI Generated Code Coverage\n\n")
+    with open(summary, "w") as f:
 
-        f.write("| Service | AI Lines | Total Lines | Coverage |\n")
-        f.write("|---------|---------:|------------:|---------:|\n")
+        f.write("# 🤖 AI Generated Code Coverage\n\n")
+
+        f.write("| Service | Coverage |\n")
+        f.write("|:---------|:----------------------------|\n")
 
         for service, total, ai, coverage in results:
 
+            overall_ai += ai
+            overall_total += total
+
+            bar = progress_bar(coverage)
+
             f.write(
-                f"| {service} | {ai} | {total} | **{coverage}%** |\n"
+                f"| **{service}** | {bar} **{coverage:.2f}%** |\n"
             )
+
+        overall = (
+            round(overall_ai * 100 / overall_total, 2)
+            if overall_total else 0
+        )
+
+        f.write("\n---\n\n")
+
+        f.write(
+            f"## Overall AI Coverage : **{overall:.2f}%**\n"
+        )
+
+print("Completed Successfully")
