@@ -19,6 +19,5 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run AI Coverage
-        run: |
-          python scripts/ai_coverage.py
+      - name: Calculate AI Coverage
+        run: python scripts/ai_coverage.py
