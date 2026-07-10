@@ -2,6 +2,8 @@ import os
 
 services = ["service-a", "service-b"]
 
+results = []
+
 for service in services:
 
     total = 0
@@ -40,11 +42,27 @@ for service in services:
 
     coverage = round(ai * 100 / total, 2)
 
-    print("--------------------------------")
-    print(f"Service : {service}")
-    print(f"Total Lines : {total}")
-    print(f"AI Lines : {ai}")
-    print(f"Coverage : {coverage}%")
+    results.append((service, total, ai, coverage))
 
-print("--------------------------------")
-print("Completed Successfully")
+    print(f"{service} : {coverage}%")
+
+#
+# Write GitHub Summary
+#
+
+summary = os.getenv("GITHUB_STEP_SUMMARY")
+
+if summary:
+
+    with open(summary, "a") as f:
+
+        f.write("# AI Generated Code Coverage\n\n")
+
+        f.write("| Service | AI Lines | Total Lines | Coverage |\n")
+        f.write("|---------|---------:|------------:|---------:|\n")
+
+        for service, total, ai, coverage in results:
+
+            f.write(
+                f"| {service} | {ai} | {total} | **{coverage}%** |\n"
+            )
